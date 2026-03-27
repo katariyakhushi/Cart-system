@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { selectCartCount } from "@/store/slices/cartSlice";
+import logoImg from "@/src/Images/logo.jpg";
 
 const steps = [
   { id: "products", label: "Products", href: "/" },
@@ -29,7 +30,12 @@ export default function Layout({ children }) {
   return (
     <div className="eco-layout">
       <header className="eco-header">
-        <div className="eco-header-title">Ecoyaan · Checkout</div>
+        <a className="eco-brand eco-brand-link" href="/" aria-label="Go to products">
+          <img className="eco-brand-logo" src={logoImg.src} alt="Ecoyaan" />
+          <div className="eco-brand-text">
+            <div className="eco-brand-name">Ecoyaan</div>
+          </div>
+        </a>
         <nav className="eco-steps">
           {steps.map((step) => (
             <Link key={step.id} href={step.href}>
@@ -39,7 +45,6 @@ export default function Layout({ children }) {
                 }`}
                 style={{ cursor: "pointer" }}
               >
-                <span className="eco-step-dot" />
                 <span>
                   {step.label}
                   {step.id === "cart" && cartCount > 0

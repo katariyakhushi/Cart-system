@@ -1,20 +1,16 @@
-import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
 import Layout from "@/components/Layout";
-import { addItem } from "@/store/slices/cartSlice";
+import { addItem, selectCartCount } from "@/store/slices/cartSlice";
+import bambooImg from "@/src/Images/bamboo.webp";
+import bagsImg from "@/src/Images/bags.jpg";
 
 export default function ProductsPage({ products }) {
-  const safeProducts = Array.isArray(products) ? products : [];
+  const router = useRouter();
   const dispatch = useDispatch();
-  const [addingId, setAddingId] = useState(null);
-
-  const handleAddToCart = (product) => {
-    dispatch(addItem(product));
-    setAddingId(product.product_id);
-    setTimeout(() => {
-      setAddingId(null);
-    }, 600);
-  };
+  const safeProducts = Array.isArray(products) ? products : [];
+  const cartCount = useSelector(selectCartCount);
+  const hasItems = cartCount > 0;
 
   return (
     <Layout>
@@ -42,33 +38,54 @@ export default function ProductsPage({ products }) {
                   ₹{product.product_price}
                 </div>
               </div>
-              <div>
+              <div className="eco-product-actions">
                 <button
                   type="button"
-                  className="eco-primary-btn"
-                  style={{ width: "auto", paddingInline: "1rem" }}
-                  disabled={addingId === product.product_id}
-                  onClick={() => handleAddToCart(product)}
+                  className="eco-secondary-btn eco-product-card-btn"
+                  onClick={() => dispatch(addItem(product))}
                 >
-                  {addingId === product.product_id ? "Added ✓" : "Add to Cart"}
+                  Add to cart
                 </button>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      <div className="eco-bottom-actions-spacer" />
+      <div className="eco-bottom-actions" role="region" aria-label="Products actions">
+        <div className="eco-bottom-actions-inner">
+          <div className="eco-bottom-actions-buttons eco-bottom-actions-buttons-single">
+            <button
+              type="button"
+              className="eco-primary-btn eco-bottom-next-btn"
+              disabled={!hasItems}
+              onClick={() => router.push("/cart")}
+            >
+              {hasItems ? `Proceed to cart (${cartCount})` : "Proceed to cart"}
+            </button>
+          </div>
+        </div>
+      </div>
     </Layout>
   );
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps({ req }) {
   try {
-    const res = await fetch(`https://cart-system-sage.vercel.app/api/cart`);
+    const proto = req?.headers?.["x-forwarded-proto"] ?? "http";
+    const host = req?.headers?.host;
+    const baseUrl = host ? `${proto}://${host}` : "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/cart`);
     const data = await res.json();
 
     return {
       props: {
-        products: data.cartItems,
+        products: (data.cartItems || []).map((p) => {
+          if (p?.product_id === 101) return { ...p, image: bambooImg.src };
+          if (p?.product_id === 102) return { ...p, image: bagsImg.src };
+          return p;
+        }),
       },
     };
   } catch (e) {

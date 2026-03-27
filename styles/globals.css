@@ -16,6 +16,17 @@ a {
   text-decoration: none;
 }
 
+.eco-brand-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.eco-brand-link:focus-visible {
+  outline: 2px solid rgba(153, 246, 228, 0.9);
+  outline-offset: 3px;
+  border-radius: 14px;
+}
+
 button {
   font-family: inherit;
 }
@@ -33,11 +44,50 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
 }
 
-.eco-header-title {
-  font-weight: 600;
-  font-size: 1.1rem;
+.eco-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.eco-brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 30% 30%, #99f6e4, #14b8a6 55%, #0f766e);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
+  flex: 0 0 auto;
+}
+
+.eco-brand-logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.eco-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.eco-brand-name {
+  font-weight: 750;
+  font-size: 1.05rem;
+  letter-spacing: 0.2px;
+}
+
+.eco-brand-subtitle {
+  font-size: 0.8rem;
+  opacity: 0.85;
 }
 
 .eco-main {
@@ -108,6 +158,21 @@ button {
   margin-top: 0.25rem;
 }
 
+/* Products page action buttons stack */
+.eco-product-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.eco-product-card-btn {
+  margin-top: 0;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: none;
+}
+
 .eco-summary-row {
   display: flex;
   justify-content: space-between;
@@ -168,23 +233,24 @@ button {
 .eco-step {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.4rem;
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  background: #ecfdf5;
-  color: #047857;
+  background: rgba(236, 253, 245, 0.95);
+  color: #065f46;
+  border: 1px solid rgba(236, 253, 245, 0.45);
+  transition: transform 0.12s ease, filter 0.12s ease, background 0.12s ease;
+}
+
+.eco-step:hover {
+  filter: brightness(1.03);
+  transform: translateY(-1px);
 }
 
 .eco-step.inactive {
-  background: #e5e7eb;
-  color: #4b5563;
-}
-
-.eco-step-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: currentColor;
+  background: rgba(229, 231, 235, 0.22);
+  color: rgba(255, 255, 255, 0.86);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .eco-form-grid {
@@ -267,5 +333,161 @@ button {
 .eco-order-subtitle {
   font-size: 0.9rem;
   color: #6b7280;
+}
+
+:root {
+  --eco-bottom-actions-height: 92px;
+}
+
+@media (max-width: 520px) {
+  :root {
+    --eco-bottom-actions-height: 98px;
+  }
+}
+
+.eco-bottom-actions-spacer {
+  height: calc(var(--eco-bottom-actions-height) + 1rem);
+}
+
+.eco-bottom-actions {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  background: rgba(245, 245, 247, 0.8);
+  border-top: 1px solid rgba(229, 231, 235, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+.eco-bottom-actions-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  width: 50%;
+}
+
+.eco-bottom-actions-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  align-items: stretch;
+  width: 100%;
+}
+
+.eco-bottom-actions-buttons-single {
+  grid-template-columns: 1fr;
+  width: 100%;
+  display: flex;
+}
+
+.eco-bottom-actions-buttons-single .eco-primary-btn {
+  flex: 1;
+  width: 100% !important;
+}
+
+.eco-secondary-btn {
+  width: 100%;
+  border-radius: 999px;
+  padding: 0.7rem 1.2rem;
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #0f766e;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+}
+
+/* Bottom bar: keep both buttons visually consistent */
+.eco-bottom-actions .eco-primary-btn,
+.eco-bottom-actions .eco-secondary-btn {
+  margin-top: 0; /* override global eco-primary-btn */
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eco-bottom-actions .eco-primary-btn {
+  font-weight: 700; /* match secondary */
+}
+
+.eco-secondary-btn:hover {
+  filter: brightness(1.02);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.eco-secondary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.eco-bottom-next-btn {
+  box-shadow: 0 18px 34px rgba(15, 118, 110, 0.28);
+}
+
+/* Address chips (mobile-friendly selection UI) */
+.eco-address-chips {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.eco-address-chip {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, filter 0.15s ease, transform 0.1s ease;
+}
+
+.eco-address-chip:hover {
+  filter: brightness(1.03);
+  transform: translateY(-1px);
+}
+
+.eco-address-chip.active {
+  background: #0f766e;
+  color: white;
+  border-color: #0f766e;
+}
+
+.eco-ghost-btn {
+  width: auto;
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #0f766e;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.eco-ghost-btn.danger {
+  background: rgba(185, 28, 28, 0.06);
+  border-color: rgba(185, 28, 28, 0.25);
+  color: #b91c1c;
+}
+
+@media (max-width: 560px) {
+  .eco-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .eco-bottom-actions-buttons {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 

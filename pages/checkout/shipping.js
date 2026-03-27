@@ -1,54 +1,70 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import Layout from "@/components/Layout";
 import OrderSummary from "@/components/OrderSummary";
+import BottomActionBar from "@/components/BottomActionBar";
 import {
-  saveShippingAddress,
+  addShippingAddress,
+  removeShippingAddress,
   selectShippingAddress,
+  selectShippingAddresses,
+  selectIsSelectedShippingAddressComplete,
+  selectSelectedShippingAddress,
+  updateShippingAddress,
 } from "@/store/slices/checkoutSlice";
+
+const validateShippingAddress = (addr) => {
+  const newErrors = {};
+  if (!addr) return newErrors;
+
+  if (!addr.fullName.trim()) newErrors.fullName = "Full name is required";
+  if (!addr.email.trim()) {
+    newErrors.email = "Email is required";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr.email)) {
+    newErrors.email = "Enter a valid email";
+  }
+  if (!addr.phone.trim()) {
+    newErrors.phone = "Phone number is required";
+  } else if (!/^\d{10}$/.test(addr.phone)) {
+    newErrors.phone = "Phone must be 10 digits";
+  }
+  if (!addr.pinCode.trim()) newErrors.pinCode = "PIN code is required";
+  if (!addr.city.trim()) newErrors.city = "City is required";
+  if (!addr.state.trim()) newErrors.state = "State is required";
+
+  return newErrors;
+};
 
 export default function ShippingPage() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const savedAddress = useSelector(selectShippingAddress);
+  const shippingAddresses = useSelector(selectShippingAddresses);
+  const selectedAddress = useSelector(selectSelectedShippingAddress);
+  const isSelectedComplete = useSelector(selectIsSelectedShippingAddressComplete);
 
-  const [form, setForm] = useState(savedAddress);
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    setForm(savedAddress);
-  }, [savedAddress]);
+  const selectedId = selectedAddress?.id;
+  const canRemove = shippingAddresses.length > 1 && !!selectedId;
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+  const getChipLabel = (addr, index) => {
+    const name = addr?.fullName?.trim();
+    if (name) return name.split(/\s+/)[0];
+    return `Address ${index + 1}`;
   };
 
-  const validate = () => {
-    const newErrors = {};
-    if (!form.fullName.trim()) newErrors.fullName = "Full name is required";
-    if (!form.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = "Enter a valid email";
-    }
-    if (!form.phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    } else if (!/^\d{10}$/.test(form.phone)) {
-      newErrors.phone = "Phone must be 10 digits";
-    }
-    if (!form.pinCode.trim()) newErrors.pinCode = "PIN code is required";
-    if (!form.city.trim()) newErrors.city = "City is required";
-    if (!form.state.trim()) newErrors.state = "State is required";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleChange = (name, value) => {
+    if (!selectedId) return;
+    dispatch(updateShippingAddress({ id: selectedId, changes: { [name]: value } }));
+    if (Object.keys(errors).length) setErrors({});
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!validate()) return;
-    dispatch(saveShippingAddress(form));
+    const newErrors = validateShippingAddress(selectedAddress);
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
     router.push("/checkout/payment");
   };
 
@@ -56,11 +72,61 @@ export default function ShippingPage() {
     <Layout>
       <div className="eco-grid eco-grid-2">
         <div className="eco-card">
-          <h2 className="eco-section-title">Shipping Address</h2>
+          <h2 className="eco-section-title">Shipping Addresses</h2>
           <p className="eco-secondary-text">
-            We&apos;ll use this information to deliver your eco-friendly order.
+            Add one or more addresses. Pick the one you want to use, then continue to payment.
           </p>
+
+          <div style={{ marginTop: "1rem" }}>
+            <div className="eco-address-chips" aria-label="Saved addresses">
+              {shippingAddresses.map((addr, index) => {
+                const active = addr.id === selectedId;
+                return (
+                  <button
+                    key={addr.id}
+                    type="button"
+                    className={`eco-address-chip ${active ? "active" : ""}`}
+                    onClick={() => {
+                      dispatch(selectShippingAddress(addr.id));
+                      setErrors({});
+                    }}
+                    aria-pressed={active}
+                  >
+                    {getChipLabel(addr, index)}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="eco-ghost-btn"
+                onClick={() => {
+                  dispatch(addShippingAddress());
+                  setErrors({});
+                }}
+              >
+                + Add address
+              </button>
+
+              <button
+                type="button"
+                className="eco-ghost-btn danger"
+                disabled={!canRemove}
+                onClick={() => {
+                  if (!canRemove) return;
+                  dispatch(removeShippingAddress(selectedId));
+                  setErrors({});
+                }}
+              >
+                Remove selected
+              </button>
+            </div>
+          </div>
+
           <form
+            id="shipping-address-form"
             onSubmit={handleSubmit}
             style={{ marginTop: "1rem" }}
             noValidate
@@ -74,13 +140,12 @@ export default function ShippingPage() {
                   id="fullName"
                   name="fullName"
                   className="eco-input"
-                  value={form.fullName}
-                  onChange={handleChange}
+                  value={selectedAddress?.fullName ?? ""}
+                  onChange={(e) => handleChange("fullName", e.target.value)}
                   placeholder="E.g. Aanya Sharma"
+                  autoComplete="name"
                 />
-                {errors.fullName && (
-                  <span className="eco-error">{errors.fullName}</span>
-                )}
+                {errors.fullName && <span className="eco-error">{errors.fullName}</span>}
               </div>
 
               <div className="eco-field">
@@ -92,13 +157,12 @@ export default function ShippingPage() {
                   name="email"
                   type="email"
                   className="eco-input"
-                  value={form.email}
-                  onChange={handleChange}
+                  value={selectedAddress?.email ?? ""}
+                  onChange={(e) => handleChange("email", e.target.value)}
                   placeholder="you@example.com"
+                  autoComplete="email"
                 />
-                {errors.email && (
-                  <span className="eco-error">{errors.email}</span>
-                )}
+                {errors.email && <span className="eco-error">{errors.email}</span>}
               </div>
 
               <div className="eco-field">
@@ -109,13 +173,13 @@ export default function ShippingPage() {
                   id="phone"
                   name="phone"
                   className="eco-input"
-                  value={form.phone}
-                  onChange={handleChange}
+                  value={selectedAddress?.phone ?? ""}
+                  onChange={(e) => handleChange("phone", e.target.value)}
                   placeholder="10-digit mobile"
+                  inputMode="numeric"
+                  autoComplete="tel"
                 />
-                {errors.phone && (
-                  <span className="eco-error">{errors.phone}</span>
-                )}
+                {errors.phone && <span className="eco-error">{errors.phone}</span>}
               </div>
 
               <div className="eco-field">
@@ -126,13 +190,12 @@ export default function ShippingPage() {
                   id="pinCode"
                   name="pinCode"
                   className="eco-input"
-                  value={form.pinCode}
-                  onChange={handleChange}
+                  value={selectedAddress?.pinCode ?? ""}
+                  onChange={(e) => handleChange("pinCode", e.target.value)}
                   placeholder="E.g. 560001"
+                  inputMode="numeric"
                 />
-                {errors.pinCode && (
-                  <span className="eco-error">{errors.pinCode}</span>
-                )}
+                {errors.pinCode && <span className="eco-error">{errors.pinCode}</span>}
               </div>
 
               <div className="eco-field">
@@ -143,13 +206,12 @@ export default function ShippingPage() {
                   id="city"
                   name="city"
                   className="eco-input"
-                  value={form.city}
-                  onChange={handleChange}
+                  value={selectedAddress?.city ?? ""}
+                  onChange={(e) => handleChange("city", e.target.value)}
                   placeholder="City"
+                  autoComplete="address-level2"
                 />
-                {errors.city && (
-                  <span className="eco-error">{errors.city}</span>
-                )}
+                {errors.city && <span className="eco-error">{errors.city}</span>}
               </div>
 
               <div className="eco-field">
@@ -160,24 +222,28 @@ export default function ShippingPage() {
                   id="state"
                   name="state"
                   className="eco-input"
-                  value={form.state}
-                  onChange={handleChange}
+                  value={selectedAddress?.state ?? ""}
+                  onChange={(e) => handleChange("state", e.target.value)}
                   placeholder="State"
+                  autoComplete="address-level1"
                 />
-                {errors.state && (
-                  <span className="eco-error">{errors.state}</span>
-                )}
+                {errors.state && <span className="eco-error">{errors.state}</span>}
               </div>
             </div>
-
-            <button type="submit" className="eco-primary-btn">
-              Continue to Payment
-            </button>
           </form>
         </div>
 
         <OrderSummary />
       </div>
+
+      <div className="eco-bottom-actions-spacer" />
+      <BottomActionBar
+        backLabel="← Back to Cart"
+        onBack={() => router.push("/cart")}
+        nextLabel="Next Step"
+        nextDisabled={!selectedAddress || !isSelectedComplete}
+        nextButtonProps={{ type: "submit", form: "shipping-address-form" }}
+      />
     </Layout>
   );
 }

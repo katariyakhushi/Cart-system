@@ -1,6 +1,8 @@
+import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import Layout from "@/components/Layout";
 import OrderSummary from "@/components/OrderSummary";
+import BottomActionBar from "@/components/BottomActionBar";
 import {
   selectCartItems,
   removeItem,
@@ -8,6 +10,7 @@ import {
 } from "@/store/slices/cartSlice";
 
 export default function CartPage() {
+  const router = useRouter();
   const dispatch = useDispatch();
   const cartItems = useSelector(selectCartItems);
   const hasItems = cartItems.length > 0;
@@ -41,19 +44,14 @@ export default function CartPage() {
                     className="eco-cart-image"
                   />
                   <div className="eco-cart-details">
-                    <div className="eco-cart-name">
-                      {item.product_name}
-                    </div>
+                    <div className="eco-cart-name">{item.product_name}</div>
                     <div className="eco-cart-meta">
                       <label>
                         Qty:&nbsp;
                         <select
                           value={item.quantity}
                           onChange={(e) =>
-                            handleQuantityChange(
-                              item.product_id,
-                              e.target.value
-                            )
+                            handleQuantityChange(item.product_id, e.target.value)
                           }
                           style={{
                             padding: "0.25rem 0.5rem",
@@ -81,8 +79,7 @@ export default function CartPage() {
                       style={{
                         width: "auto",
                         paddingInline: "1rem",
-                        background:
-                          "linear-gradient(135deg, #dc2626, #f97316)",
+                        background: "linear-gradient(135deg, #dc2626, #f97316)",
                         boxShadow: "0 10px 20px rgba(220, 38, 38, 0.25)",
                       }}
                       onClick={() => handleRemove(item.product_id)}
@@ -94,38 +91,18 @@ export default function CartPage() {
               ))}
             </div>
           )}
-          <div style={{ marginTop: "1rem" }}>
-            <button
-              type="button"
-              className="eco-primary-btn"
-              style={{
-                width: "auto",
-                paddingInline: "1rem",
-                background:
-                  "linear-gradient(135deg, #4b5563, #9ca3af)",
-                boxShadow: "0 10px 20px rgba(55, 65, 81, 0.25)",
-              }}
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.location.href = "/";
-                }
-              }}
-            >
-              ← Back to Products
-            </button>
-          </div>
         </div>
-        <OrderSummary
-          showButton
-          buttonLabel="Proceed to Checkout"
-          disabled={!hasItems}
-          onButtonClick={() => {
-            if (typeof window !== "undefined") {
-              window.location.href = "/checkout/shipping";
-            }
-          }}
-        />
+        <OrderSummary />
       </div>
+
+      <div className="eco-bottom-actions-spacer" />
+      <BottomActionBar
+        backLabel="← Back to Products"
+        onBack={() => router.push("/")}
+        nextLabel="Next Step"
+        nextDisabled={!hasItems}
+        onNext={() => router.push("/checkout/shipping")}
+      />
     </Layout>
   );
 }
